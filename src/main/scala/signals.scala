@@ -29,7 +29,7 @@ private [interpol] class Signals {
                                       Array[Class[_]](handlerCls),
                                       new InvocationHandler {
       def invoke(proxy: Object, method: Method, args: Array[Object]) = {
-        if (method.getName == "handle") {
+        if (method.getName == handleMeth.getName) {
           handler(name(args(0)))
         }
         null
