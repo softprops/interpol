@@ -18,23 +18,24 @@ private [interpol] class Signals {
   private val handleMeth = signalCls.getMethod("handle", signalCls, handlerCls)
   private val nameMeth = signalCls.getMethod("getName")
 
-  private def name(arg: Object) =
+  private def signalName(arg: Object) =
     nameMeth.invoke(arg).asInstanceOf[String]
   private def newInstance(signal: String) =
     signalCls.getConstructor(classOf[String])
              .newInstance(signal)
              .asInstanceOf[Object]
   def apply(signal: String, handler: String => Unit) {
-    val prox = Proxy.newProxyInstance(handlerCls.getClassLoader,
-                                      Array[Class[_]](handlerCls),
-                                      new InvocationHandler {
-      def invoke(proxy: Object, method: Method, args: Array[Object]) = {
-        if (method.getName == handleMeth.getName) {
-          handler(name(args(0)))
+    val prox = Proxy.newProxyInstance(
+      handlerCls.getClassLoader,
+      Array[Class[_]](handlerCls),
+      new InvocationHandler {
+        def invoke(proxy: Object, method: Method, args: Array[Object]) = {
+          if (method.getName == handleMeth.getName) {
+            handler(signalName(args(0)))
+          }
+          null
         }
-        null
-      }
-    })
+      })
     handleMeth.invoke(null, newInstance(signal), prox)
   }
 }
