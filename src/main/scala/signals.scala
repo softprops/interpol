@@ -3,10 +3,20 @@ package interpol
 import java.lang.reflect.{InvocationHandler, Method, Proxy}
 import scala.util.control.Exception.catching
 
+
+trait Capture {
+  /** For a given POSIX signal, apply a handler function */
+  def apply(signal: String)(handler: String => Unit): Unit
+}
+
 object Signals {
-  def apply() = {
+  /** This will return None if your JDK does not include sun.misc.SignalHandler */
+  def apply(): Option[Capture] = {
     catching(classOf[ClassNotFoundException]).opt {
-      new Signals(Class.forName("sun.misc.SignalHandler"), Class.forName("sun.misc.SignalHandler"))
+      new SignalCapture(
+        Class.forName("sun.misc.Signal"),
+        Class.forName("sun.misc.SignalHandler")
+      )
     }
   }
 }
@@ -24,8 +34,9 @@ private [interpol] class Signaler(cls: Class[_], handlerCls: Class[_]) {
        .asInstanceOf[Object]
 }
 
-private [interpol] class Signals(
-  handlerCls: Class[_], signalCls: Class[_]) {
+private [interpol] class SignalCapture(
+  signalCls: Class[_], handlerCls: Class[_])
+  extends Capture {
   val sig = new Signaler(signalCls, handlerCls)
   def apply(signal: String)(handler: String => Unit) {
     val prox = Proxy.newProxyInstance(
