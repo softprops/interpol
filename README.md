@@ -5,8 +5,10 @@ Interprocess communication for scala.
 ## Usage
 
 ```scala
-interpol.Signals()("HUP") {
-  case _ => reload()
+interpol.Signals().map {
+  _("HUP") {
+    str => println("got HUP %s" format str)
+  }
 }
 ```
 
